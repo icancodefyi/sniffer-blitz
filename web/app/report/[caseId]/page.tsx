@@ -42,10 +42,10 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
   if (!caseData) {
     if (loadingTimeout) {
       return (
-        <main className="min-h-screen flex items-center justify-center">
+        <main className="min-h-screen flex items-center justify-center bg-white">
           <div className="text-center">
-            <p className="text-muted mb-2">Unable to load report</p>
-            <Link href={`/investigation/${caseId}`} className="text-accent text-sm hover:underline">
+            <p className="text-[#6b7280] mb-2">Unable to load report</p>
+            <Link href={`/investigation/${caseId}`} className="text-indigo-600 text-sm hover:underline">
               ← Back to Investigation
             </Link>
           </div>
@@ -53,8 +53,8 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
       );
     }
     return (
-      <main className="min-h-screen flex items-center justify-center">
-        <p className="text-muted">Loading...</p>
+      <main className="min-h-screen flex items-center justify-center bg-white">
+        <p className="text-[#6b7280]">Loading...</p>
       </main>
     );
   }
@@ -65,41 +65,44 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
   const reportHash = caseData.report_hash;
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-white">
       {/* Navbar */}
-      <nav className="border-b border-border bg-surface/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <nav className="border-b border-[#e8e4de] bg-white sticky top-0 z-50">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-8 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+            <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.3-4.3"/>
               </svg>
             </div>
-            <span className="font-semibold text-lg">Sniffer</span>
+            <span className="text-[21px] font-semibold tracking-tight text-[#0a0a0a]">
+              sniffer
+            </span>
           </Link>
-          <Link href={`/investigation/${caseId}`} className="text-accent text-sm hover:underline">
+          <Link href={`/investigation/${caseId}`} className="text-[#6b7280] text-sm hover:text-[#0a0a0a] transition-colors">
             ← Back to Investigation
           </Link>
         </div>
       </nav>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-8 py-8">
         {/* Case Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted mb-2">Report #{caseId}</p>
-          <h1 className="font-serif text-4xl mb-4">Investigation Report</h1>
+          <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-[#a8a29e] mb-2">Report #{caseId}</p>
+          <h1 className="font-serif text-4xl sm:text-5xl font-medium leading-[1.1] tracking-tight text-[#0a0a0a] mb-4">Investigation Report</h1>
           <div className="flex flex-wrap gap-4">
-            <div className="px-4 py-2 rounded-lg border border-border bg-surface">
-              <p className="font-mono text-[10px] uppercase tracking-wider text-muted mb-1">Findings</p>
-              <p className="text-2xl font-semibold">{findings.length}</p>
+            <div className="px-4 py-2 rounded-lg border border-[#e8e4de] bg-white">
+              <p className="font-mono text-[10px] uppercase tracking-wider text-[#a8a29e] mb-1">Findings</p>
+              <p className="text-2xl font-semibold text-[#0a0a0a]">{findings.length}</p>
             </div>
-            <div className="px-4 py-2 rounded-lg border border-border bg-surface">
-              <p className="font-mono text-[10px] uppercase tracking-wider text-muted mb-1">Formats</p>
-              <p className="text-2xl font-semibold">{formatSpecs.length}</p>
+            <div className="px-4 py-2 rounded-lg border border-[#e8e4de] bg-white">
+              <p className="font-mono text-[10px] uppercase tracking-wider text-[#a8a29e] mb-1">Formats</p>
+              <p className="text-2xl font-semibold text-[#0a0a0a]">{formatSpecs.length}</p>
             </div>
-            <div className="px-4 py-2 rounded-lg border border-border bg-surface">
-              <p className="font-mono text-[10px] uppercase tracking-wider text-muted mb-1">Complaints</p>
-              <p className="text-2xl font-semibold">{complaints.length}</p>
+            <div className="px-4 py-2 rounded-lg border border-[#e8e4de] bg-white">
+              <p className="font-mono text-[10px] uppercase tracking-wider text-[#a8a29e] mb-1">Complaints</p>
+              <p className="text-2xl font-semibold text-[#0a0a0a]">{complaints.length}</p>
             </div>
           </div>
         </motion.div>
@@ -113,34 +116,34 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
               </svg>
               <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-success">On-Chain Proof</p>
             </div>
-            <p className="text-sm mb-2">This report is stored on Monad blockchain. The hash below proves the report is tamper-proof.</p>
-            <div className="font-mono text-xs bg-background/50 rounded-lg p-3 break-all">
-              <span className="text-muted">Report Hash: </span>
-              <span className="text-foreground">{reportHash}</span>
+            <p className="text-sm text-[#6b7280] mb-2">This report is stored on Monad blockchain. The hash below proves the report is tamper-proof.</p>
+            <div className="font-mono text-xs bg-white/50 rounded-lg p-3 break-all border border-success/20">
+              <span className="text-[#a8a29e]">Report Hash: </span>
+              <span className="text-[#0a0a0a]">{reportHash}</span>
             </div>
           </motion.div>
         )}
 
         {/* Findings */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-xl border border-border bg-surface p-6 mb-8">
-          <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted mb-4">Findings ({findings.length})</p>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-xl border border-[#e8e4de] bg-white p-6 mb-8">
+          <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-[#a8a29e] mb-4">Findings ({findings.length})</p>
           {findings.length === 0 ? (
-            <p className="text-muted text-sm">No findings.</p>
+            <p className="text-[#6b7280] text-sm">No findings.</p>
           ) : (
             <div className="space-y-3">
               {findings.map((f: any, i: number) => (
-                <div key={i} className="p-4 rounded-lg border border-border bg-background">
+                <div key={i} className="p-4 rounded-lg border border-[#e8e4de] bg-[#fafaf9]">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-medium text-sm">{f.domain}</p>
-                      <p className="font-mono text-xs text-muted break-all">{f.url}</p>
+                      <p className="font-medium text-sm text-[#0a0a0a]">{f.domain}</p>
+                      <p className="font-mono text-xs text-[#6b7280] break-all">{f.url}</p>
                     </div>
                     <span className={`font-mono text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border ${f.confidence >= 90 ? "bg-danger/20 text-danger border-danger/30" : f.confidence >= 80 ? "bg-warning/20 text-warning border-warning/30" : "bg-muted/20 text-muted border-muted/30"}`}>
                       {f.confidence}% match
                     </span>
                   </div>
                   {f.metadata && (
-                    <div className="font-mono text-[10px] text-muted mt-2">
+                    <div className="font-mono text-[10px] text-[#6b7280] mt-2">
                       {(() => {
                         try {
                           const meta = JSON.parse(f.metadata);
@@ -159,18 +162,18 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
 
         {/* Format Specs */}
         {formatSpecs.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="rounded-xl border border-border bg-surface p-6 mb-8">
-            <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted mb-4">Takedown Formats Detected ({formatSpecs.length})</p>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="rounded-xl border border-[#e8e4de] bg-white p-6 mb-8">
+            <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-[#a8a29e] mb-4">Takedown Formats Detected ({formatSpecs.length})</p>
             <div className="space-y-3">
               {formatSpecs.map((f: any, i: number) => (
-                <div key={i} className="p-4 rounded-lg border border-border bg-background">
+                <div key={i} className="p-4 rounded-lg border border-[#e8e4de] bg-[#fafaf9]">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="font-medium text-sm">{f.platform}</p>
-                    <span className="font-mono text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border bg-accent/10 text-accent border-accent/20">
+                    <p className="font-medium text-sm text-[#0a0a0a]">{f.platform}</p>
+                    <span className="font-mono text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border bg-indigo-50 text-indigo-600 border-indigo-200">
                       {f.formatType}
                     </span>
                   </div>
-                  <p className="font-mono text-xs text-muted">Contact: {f.contact}</p>
+                  <p className="font-mono text-xs text-[#6b7280]">Contact: {f.contact}</p>
                 </div>
               ))}
             </div>
@@ -179,16 +182,16 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
 
         {/* Complaints */}
         {complaints.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="rounded-xl border border-border bg-surface p-6 mb-8">
-            <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted mb-4">Prepared Complaints ({complaints.length})</p>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="rounded-xl border border-[#e8e4de] bg-white p-6 mb-8">
+            <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-[#a8a29e] mb-4">Prepared Complaints ({complaints.length})</p>
             <div className="space-y-4">
               {complaints.map((c: any, i: number) => {
                 return (
-                  <div key={i} className="p-4 rounded-lg border border-border bg-background">
+                  <div key={i} className="p-4 rounded-lg border border-[#e8e4de] bg-[#fafaf9]">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <p className="font-medium text-sm">{c.platform}</p>
-                        <p className="font-mono text-[10px] text-muted">{c.format || c.formatType}</p>
+                        <p className="font-medium text-sm text-[#0a0a0a]">{c.platform}</p>
+                        <p className="font-mono text-[10px] text-[#6b7280]">{c.format || c.formatType}</p>
                       </div>
                       <span className="font-mono text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border bg-success/20 text-success border-success/30">
                         Ready to Send
@@ -196,16 +199,16 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
                     </div>
                     <div className="space-y-2 text-xs">
                       <div>
-                        <p className="font-mono text-[10px] text-muted mb-1">To:</p>
-                        <p className="font-mono">{c.contact}</p>
+                        <p className="font-mono text-[10px] text-[#a8a29e] mb-1">To:</p>
+                        <p className="font-mono text-[#0a0a0a]">{c.contact}</p>
                       </div>
                       <div>
-                        <p className="font-mono text-[10px] text-muted mb-1">Subject:</p>
-                        <p className="font-medium">{c.subject}</p>
+                        <p className="font-mono text-[10px] text-[#a8a29e] mb-1">Subject:</p>
+                        <p className="font-medium text-[#0a0a0a]">{c.subject}</p>
                       </div>
                       <div>
-                        <p className="font-mono text-[10px] text-muted mb-1">Body:</p>
-                        <pre className="font-sans text-xs whitespace-pre-wrap bg-background/50 rounded p-3 border border-border">{c.body}</pre>
+                        <p className="font-mono text-[10px] text-[#a8a29e] mb-1">Body:</p>
+                        <pre className="font-sans text-xs whitespace-pre-wrap bg-white rounded p-3 border border-[#e8e4de] text-[#0a0a0a]">{c.body}</pre>
                       </div>
                     </div>
                     <div className="flex gap-2 mt-3">
@@ -214,7 +217,7 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
                           const mailto = `mailto:${c.contact}?subject=${encodeURIComponent(c.subject)}&body=${encodeURIComponent(c.body)}`;
                           window.open(mailto);
                         }}
-                        className="px-3 py-1.5 bg-accent text-white rounded-lg text-xs font-medium hover:bg-accent-hover transition-colors"
+                        className="px-3 py-1.5 bg-[#0a0a0a] text-white rounded-full text-xs font-medium hover:opacity-75 transition-opacity"
                       >
                         Open in Email
                       </button>
@@ -222,7 +225,7 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
                         onClick={() => {
                           navigator.clipboard.writeText(`${c.subject}\n\n${c.body}`);
                         }}
-                        className="px-3 py-1.5 border border-border rounded-lg text-xs font-medium hover:bg-background transition-colors"
+                        className="px-3 py-1.5 border border-[#e8e4de] rounded-full text-xs font-medium text-[#0a0a0a] hover:bg-[#fafaf9] transition-colors"
                       >
                         Copy Text
                       </button>
@@ -235,7 +238,7 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
         )}
 
         {/* Case Sealed */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="rounded-xl border border-border bg-surface p-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="rounded-xl border border-[#e8e4de] bg-white p-6">
           <div className="flex items-center gap-2 mb-3">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-success">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
@@ -243,7 +246,7 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
             </svg>
             <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-success">Case Sealed</p>
           </div>
-          <div className="space-y-2 text-sm">
+          <div className="space-y-2 text-sm text-[#0a0a0a]">
             <p>✓ {findings.length} matches found across {new Set(findings.map((f: any) => f.domain)).size} platforms</p>
             <p>✓ {formatSpecs.length} takedown formats detected</p>
             <p>✓ {complaints.length} complaints prepared and ready to send</p>
