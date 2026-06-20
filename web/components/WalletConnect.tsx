@@ -8,6 +8,7 @@ export function WalletButton() {
   const [address, setAddress] = useState<`0x${string}` | null>(null);
   const [balance, setBalance] = useState<bigint | null>(null);
   const [connecting, setConnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
@@ -36,12 +37,17 @@ export function WalletButton() {
 
   const handleConnect = useCallback(async () => {
     setConnecting(true);
+    setError(null);
     try {
+      if (!window.ethereum) {
+        setError("MetaMask not detected. Please install MetaMask to connect.");
+        return;
+      }
       const addr = await connectWallet();
       setAddress(addr);
       sessionStorage.setItem("sniffer_wallet", addr);
-    } catch (e) {
-      console.error("Failed to connect wallet:", e);
+    } catch (e: any) {
+      setError(e.message || "Failed to connect");
     } finally {
       setConnecting(false);
     }
@@ -87,13 +93,28 @@ export function WalletButton() {
   }
 
   return (
-    <button
-      onClick={handleConnect}
-      disabled={connecting}
-      className="px-4 py-1.5 bg-[#0a0a0a] text-white rounded-full text-xs font-medium hover:opacity-75 disabled:opacity-50 transition-opacity"
-    >
-      {connecting ? "Connecting..." : "Connect Wallet"}
-    </button>
+    <div className="relative">
+      <button
+        onClick={handleConnect}
+        disabled={connecting}
+        className="px-4 py-1.5 bg-[#0a0a0a] text-white rounded-full text-xs font-medium hover:opacity-75 disabled:opacity-50 transition-opacity"
+      >
+        {connecting ? "Connecting..." : "Connect Wallet"}
+      </button>
+      {error && (
+        <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-[#e8e4de] bg-white shadow-lg p-3 z-50">
+          <p className="text-xs text-red-500">{error}</p>
+          <a
+            href="https://metamask.io/download/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-indigo-500 underline mt-1 inline-block"
+          >
+            Install MetaMask →
+          </a>
+        </div>
+      )}
+    </div>
   );
 }
 
