@@ -40,7 +40,7 @@ export default function InvestigatePage() {
   }, [handleFile]);
 
   const handleSubmit = async () => {
-    if (!file) return;
+    if (!file || !preview) return;
     setLoading(true);
 
     try {
@@ -70,6 +70,7 @@ export default function InvestigatePage() {
       const data = await res.json();
       
       if (data.case_id) {
+        sessionStorage.setItem(`sniffer_image_${data.case_id}`, preview);
         router.push(`/investigation/${data.case_id}`);
       } else {
         throw new Error("No case ID returned from server");
@@ -179,7 +180,7 @@ export default function InvestigatePage() {
 
           {/* Payment & Submit */}
           <div className="rounded-xl border border-[#e8e4de] bg-white p-6 mb-8">
-            <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-[#a8a29e] mb-4">Agent Gas Fee</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-[#a8a29e] mb-4">Agent Gas Fee (Optional)</p>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -189,16 +190,22 @@ export default function InvestigatePage() {
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium text-[#0a0a0a]">Pay Agent Gas Fees</p>
-                <p className="text-xs text-[#6b7280]">Agents need MON to record findings on-chain. One-time payment covers all agent transactions for this case.</p>
+                <p className="text-xs text-[#6b7280]">Agents need MON to record findings on-chain. Optional during demo — agents will still work without payment.</p>
               </div>
             </div>
             <PayButton onPaid={() => setPaid(true)} disabled={loading} />
+            <button
+              onClick={() => setPaid(true)}
+              className="w-full mt-2 py-2 text-xs text-[#a8a29e] hover:text-[#0a0a0a] transition-colors"
+            >
+              Skip Payment — Start Anyway
+            </button>
           </div>
 
           {/* Submit */}
           <button
             onClick={handleSubmit}
-            disabled={!file || !paid || loading || Object.values(sources).every(v => !v)}
+            disabled={!file || loading || Object.values(sources).every(v => !v)}
             className="w-full py-3 bg-[#0a0a0a] text-white rounded-full font-medium hover:opacity-75 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity flex items-center justify-center gap-2"
           >
             {loading ? (
@@ -217,11 +224,8 @@ export default function InvestigatePage() {
               </>
             )}
           </button>
-          {!connected && (
-            <p className="text-center text-xs text-[#a8a29e] mt-3">Connect your wallet above to pay the agent gas fee and start the investigation</p>
-          )}
-          {connected && !paid && (
-            <p className="text-center text-xs text-[#a8a29e] mt-3">Complete the payment above to unlock the investigation</p>
+          {!file && (
+            <p className="text-center text-xs text-[#a8a29e] mt-3">Upload an image to start the investigation</p>
           )}
         </motion.div>
       </section>

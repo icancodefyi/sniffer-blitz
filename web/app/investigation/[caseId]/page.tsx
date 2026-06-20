@@ -21,9 +21,14 @@ export default function InvestigationPage({ params }: { params: Promise<{ caseId
   const [caseData, setCaseData] = useState<any>(null);
   const [agentStatus, setAgentStatus] = useState<Record<string, string>>({});
   const [activity, setActivity] = useState<any[]>([]);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
-    params.then(p => setCaseId(p.caseId));
+    params.then(p => {
+      setCaseId(p.caseId);
+      const stored = sessionStorage.getItem(`sniffer_image_${p.caseId}`);
+      if (stored) setImagePreview(stored);
+    });
   }, [params]);
 
   useEffect(() => {
@@ -96,9 +101,69 @@ export default function InvestigationPage({ params }: { params: Promise<{ caseId
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Pipeline Visualization */}
-          <div className="lg:col-span-2">
+        <div className="grid lg:grid-cols-4 gap-8">
+          {/* Left Sidebar: Image + Activity */}
+          <div className="lg:col-span-1 space-y-8">
+            {/* Image Preview */}
+            <div className="rounded-xl border border-[#e8e4de] bg-white p-4 sticky top-20">
+              <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-[#a8a29e] mb-3">Uploaded Content</p>
+              {imagePreview ? (
+                <div className="relative">
+                  <img src={imagePreview} alt="Uploaded content" className="w-full rounded-lg border border-[#e8e4de]" />
+                  <div className="absolute top-2 right-2 bg-[#0a0a0a]/70 text-white text-[9px] font-mono px-2 py-0.5 rounded-full">
+                    Case #{caseId}
+                  </div>
+                </div>
+              ) : (
+                <div className="h-40 rounded-lg bg-[#fafaf9] border border-dashed border-[#e8e4de] flex items-center justify-center">
+                  <p className="text-[10px] text-[#a8a29e]">No preview available</p>
+                </div>
+              )}
+              {/* Live indicator */}
+              <div className="flex items-center gap-2 mt-4">
+                <motion.div
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: isComplete ? "#22c55e" : "#f59e0b" }}
+                  animate={{ opacity: [1, 0.3, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                />
+                <span className="font-mono text-[10px] text-[#6b7280]">
+                  {isComplete ? "Investigation Complete" : "Live Investigation"}
+                </span>
+              </div>
+            </div>
+
+            {/* Activity Log */}
+            <div className="rounded-xl border border-[#e8e4de] bg-white p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-[#a8a29e]">Activity Log</p>
+                <div className="w-2 h-2 rounded-full bg-success animate-pulse-glow" />
+              </div>
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                <AnimatePresence>
+                  {activity.slice().reverse().slice(0, 20).map((entry, i) => (
+                    <motion.div
+                      key={`${entry.timestamp}-${i}`}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="p-3 rounded-lg bg-[#fafaf9] border border-[#e8e4de]"
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-mono text-[9px] text-[#a8a29e]">{new Date(entry.timestamp).toLocaleTimeString()}</span>
+                        <span className="font-mono text-[9px] uppercase tracking-wider text-indigo-600">{entry.agent}</span>
+                      </div>
+                      <p className="text-xs text-[#0a0a0a]">{entry.action}</p>
+                      {entry.details && <p className="text-[10px] text-[#6b7280] mt-0.5">{entry.details}</p>}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Pipeline Visualization */}
+          <div className="lg:col-span-3">
             <div className="rounded-xl border border-[#e8e4de] bg-white p-6">
               <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-[#a8a29e] mb-6">Agent Pipeline</p>
 
@@ -254,36 +319,6 @@ export default function InvestigationPage({ params }: { params: Promise<{ caseId
                   )}
                 </div>
               </motion.div>
-            </div>
-          </div>
-
-          {/* Activity Log */}
-          <div>
-            <div className="rounded-xl border border-[#e8e4de] bg-white p-6 sticky top-20">
-              <div className="flex items-center gap-2 mb-4">
-                <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-[#a8a29e]">Activity Log</p>
-                <div className="w-2 h-2 rounded-full bg-success animate-pulse-glow" />
-              </div>
-              <div className="space-y-2 max-h-[600px] overflow-y-auto">
-                <AnimatePresence>
-                  {activity.slice().reverse().slice(0, 20).map((entry, i) => (
-                    <motion.div
-                      key={`${entry.timestamp}-${i}`}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="p-3 rounded-lg bg-[#fafaf9] border border-[#e8e4de]"
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-mono text-[9px] text-[#a8a29e]">{new Date(entry.timestamp).toLocaleTimeString()}</span>
-                        <span className="font-mono text-[9px] uppercase tracking-wider text-indigo-600">{entry.agent}</span>
-                      </div>
-                      <p className="text-xs text-[#0a0a0a]">{entry.action}</p>
-                      {entry.details && <p className="text-[10px] text-[#6b7280] mt-0.5">{entry.details}</p>}
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
             </div>
           </div>
         </div>

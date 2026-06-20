@@ -12,9 +12,14 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
   const [caseId, setCaseId] = useState<string>("");
   const [caseData, setCaseData] = useState<any>(null);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
-    params.then(p => setCaseId(p.caseId));
+    params.then(p => {
+      setCaseId(p.caseId);
+      const stored = sessionStorage.getItem(`sniffer_image_${p.caseId}`);
+      if (stored) setImagePreview(stored);
+    });
   }, [params]);
 
   useEffect(() => {
@@ -106,6 +111,21 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
             </div>
           </div>
         </motion.div>
+
+        {/* Uploaded Image */}
+        {imagePreview && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+            <div className="flex items-start gap-6">
+              <div className="w-48 shrink-0">
+                <img src={imagePreview} alt="Uploaded content" className="w-full rounded-xl border border-[#e8e4de]" />
+              </div>
+              <div className="flex-1 pt-2">
+                <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-[#a8a29e] mb-1">Investigated Content</p>
+                <p className="text-sm text-[#6b7280]">The image above was analyzed by all 5 agents. Results are shown below.</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* On-Chain Proof */}
         {reportHash && (
