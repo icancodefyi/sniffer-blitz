@@ -1,6 +1,7 @@
 from agents.base_agent import BaseAgent
 import time
 import json
+from datetime import date
 
 class TelegramScanner(BaseAgent):
     def __init__(self, private_key: str, trail_address: str, registry_address: str):
@@ -135,41 +136,64 @@ class FormatDetector(BaseAgent):
         platforms = set(f["domain"] for f in findings)
         format_specs = []
 
+        body_template = (
+            "Dear Trust & Safety / Abuse Team,\n\n"
+            "I would like to report a page on your platform that contains intimate media "
+            "involving someone who seems to be a minor, which appears to have been uploaded "
+            "without their consent and may come under child pornography.\n\n"
+            "Reported Content URL: {url}\n\n"
+            "Based on the circumstances in which this content appears online, it may constitute "
+            "non-consensual distribution of private media and could violate your platform's policies.\n\n"
+            "A forensic investigation was performed using the LeakOps verification platform and "
+            "generated the following case record:\n"
+            "Case ID: {case_id_ref}\n"
+            "Analysis Date: {analysis_date}\n\n"
+            "Given the potential privacy violation, I kindly request that your Trust & Safety "
+            "team review and remove the content if it breaches your policies.\n\n"
+            "Please confirm receipt of this report and let me know if additional information is required.\n"
+            "As said on the website you have zero tolerance policy for child porn content. "
+            "hoping the takedown or relevant action to be acknowledges and taken as soon a s possilbe\n\n"
+            "Thank you for your time and assistance.\n"
+            "Sincerely,\n"
+            "Zaid Rakhange\n\n"
+            "This report is sent on behalf on the user of this"
+        )
+
         format_map = {
             "t.me/leakedcontent": {
                 "platform": "Telegram",
                 "formatType": "email",
                 "contact": "abuse@telegram.org",
-                "subjectTemplate": "DMCA Takedown Request - Case #{case_id}",
-                "bodyTemplate": "I am writing to request the immediate removal of the following content from Telegram which infringes my copyright and was shared without consent.\n\nContent URL: {url}\nCase ID: {case_id}\n\nI certify under penalty of perjury that this is accurate.\n\nSincerely,\nThe victim"
+                "subjectTemplate": "Content Removal Request - Case #{case_id}",
+                "bodyTemplate": body_template
             },
             "t.me/viralmedia": {
                 "platform": "Telegram",
                 "formatType": "email",
                 "contact": "abuse@telegram.org",
                 "subjectTemplate": "Content Removal Request - Case #{case_id}",
-                "bodyTemplate": "I request the removal of non-consensual intimate content shared on your platform.\n\nContent URL: {url}\nCase ID: {case_id}\n\nThis content was shared without my consent.\n\nSincerely,\nThe victim"
+                "bodyTemplate": body_template
             },
             "mydesi.ltd": {
                 "platform": "mydesi.ltd",
                 "formatType": "email",
                 "contact": "abuse@mydesi.ltd",
-                "subjectTemplate": "DMCA Takedown Notice - Case #{case_id}",
-                "bodyTemplate": "To whom it may concern,\n\nI hereby notify you that the following content hosted on your platform infringes my copyright and was distributed without authorization.\n\nContent URL: {url}\nCase ID: {case_id}\n\nI demand immediate removal.\n\nSincerely,\nThe victim"
+                "subjectTemplate": "Content Removal Request - Case #{case_id}",
+                "bodyTemplate": body_template
             },
             "fsiblog.pro": {
                 "platform": "fsiblog.pro",
                 "formatType": "web_form",
                 "contact": "https://fsiblog.pro/report",
-                "subjectTemplate": "Content Violation Report",
-                "bodyTemplate": "URL: {url}\nReason: Non-consensual content distribution\nCase ID: {case_id}\n\nPlease remove this content immediately."
+                "subjectTemplate": "Content Violation Report - Case #{case_id}",
+                "bodyTemplate": body_template
             },
             "auntymaza.watch": {
                 "platform": "auntymaza.watch",
                 "formatType": "email",
                 "contact": "support@auntymaza.watch",
-                "subjectTemplate": "Urgent: Content Removal Request - Case #{case_id}",
-                "bodyTemplate": "This is an urgent request to remove content that violates privacy laws.\n\nContent URL: {url}\nCase ID: {case_id}\n\nRemove immediately or face legal action.\n\nSincerely,\nThe victim"
+                "subjectTemplate": "Content Removal Request - Case #{case_id}",
+                "bodyTemplate": body_template
             }
         }
 
@@ -201,17 +225,25 @@ class TakedownPreparer(BaseAgent):
 
         complaints = []
         spec_map = {s["platform"]: s for s in format_specs}
+        today = date.today()
+        analysis_date = today.strftime("%d %B %Y")
+        case_id_ref = f"LKO-{case_id}-2026"
 
         for finding in findings:
             domain = finding["domain"]
             if domain in spec_map:
                 spec = spec_map[domain]
+                body = (spec["bodyTemplate"]
+                    .replace("{url}", finding["url"])
+                    .replace("{case_id}", str(case_id))
+                    .replace("{case_id_ref}", case_id_ref)
+                    .replace("{analysis_date}", analysis_date))
                 complaint_data = json.dumps({
                     "platform": spec["platform"],
                     "format": spec["formatType"],
                     "contact": spec["contact"],
                     "subject": spec["subjectTemplate"].replace("{case_id}", str(case_id)),
-                    "body": spec["bodyTemplate"].replace("{url}", finding["url"]).replace("{case_id}", str(case_id)),
+                    "body": body,
                     "evidence_urls": [finding["url"]],
                     "confidence": finding["confidence"],
                     "status": "ready_to_send"

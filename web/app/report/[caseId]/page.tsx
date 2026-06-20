@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
+import { WalletButton } from "@/components/WalletConnect";
 
 const COORDINATOR_URL = process.env.NEXT_PUBLIC_COORDINATOR_URL || "http://localhost:8000";
 
@@ -70,19 +72,17 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
       <nav className="border-b border-[#e8e4de] bg-white sticky top-0 z-50">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-8 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.3-4.3"/>
-              </svg>
-            </div>
+            <Image src="/logo.png" alt="Sniffer" width={28} height={28} />
             <span className="text-[21px] font-semibold tracking-tight text-[#0a0a0a]">
               sniffer
             </span>
           </Link>
-          <Link href={`/investigation/${caseId}`} className="text-[#6b7280] text-sm hover:text-[#0a0a0a] transition-colors">
-            ← Back to Investigation
-          </Link>
+          <div className="flex items-center gap-2.5">
+            <WalletButton />
+            <Link href={`/investigation/${caseId}`} className="text-[#6b7280] text-sm hover:text-[#0a0a0a] transition-colors">
+              ← Back to Investigation
+            </Link>
+          </div>
         </div>
       </nav>
 
@@ -214,12 +214,12 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
                     <div className="flex gap-2 mt-3">
                       <button
                         onClick={() => {
-                          const mailto = `mailto:${c.contact}?subject=${encodeURIComponent(c.subject)}&body=${encodeURIComponent(c.body)}`;
-                          window.open(mailto);
+                          const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(c.contact)}&su=${encodeURIComponent(c.subject)}&body=${encodeURIComponent(c.body)}`;
+                          window.open(gmailUrl, "_blank");
                         }}
                         className="px-3 py-1.5 bg-[#0a0a0a] text-white rounded-full text-xs font-medium hover:opacity-75 transition-opacity"
                       >
-                        Open in Email
+                        Open in Gmail
                       </button>
                       <button
                         onClick={() => {

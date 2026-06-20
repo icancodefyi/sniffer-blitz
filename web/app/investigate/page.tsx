@@ -3,17 +3,22 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
+import { useAccount } from "wagmi";
+import { WalletButton, PayButton } from "@/components/WalletConnect";
 
 const COORDINATOR_URL = process.env.NEXT_PUBLIC_COORDINATOR_URL || "http://localhost:8000";
 
 export default function InvestigatePage() {
   const router = useRouter();
+  const { isConnected } = useAccount();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [sources, setSources] = useState({ telegram: true, instagram: true, leak_domains: true });
   const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [paid, setPaid] = useState(false);
 
   const handleFile = useCallback((f: File) => {
     setFile(f);
@@ -77,16 +82,14 @@ export default function InvestigatePage() {
       <nav className="border-b border-[#e8e4de] bg-white sticky top-0 z-50">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-8 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.3-4.3"/>
-              </svg>
-            </div>
+            <Image src="/logo.png" alt="Sniffer" width={28} height={28} />
             <span className="text-[21px] font-semibold tracking-tight text-[#0a0a0a]">
               sniffer
             </span>
           </Link>
+          <div className="flex items-center gap-2.5">
+            <WalletButton />
+          </div>
         </div>
       </nav>
 
@@ -169,10 +172,28 @@ export default function InvestigatePage() {
             </div>
           </div>
 
+          {/* Payment & Submit */}
+          <div className="rounded-xl border border-[#e8e4de] bg-white p-6 mb-8">
+            <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-[#a8a29e] mb-4">Agent Gas Fee</p>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-[#0a0a0a]">Pay Agent Gas Fees</p>
+                <p className="text-xs text-[#6b7280]">Agents need MON to record findings on-chain. One-time payment covers all agent transactions for this case.</p>
+              </div>
+            </div>
+            <PayButton onPaid={() => setPaid(true)} disabled={loading} />
+          </div>
+
           {/* Submit */}
           <button
             onClick={handleSubmit}
-            disabled={!file || loading || Object.values(sources).every(v => !v)}
+            disabled={!file || !paid || loading || Object.values(sources).every(v => !v)}
             className="w-full py-3 bg-[#0a0a0a] text-white rounded-full font-medium hover:opacity-75 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity flex items-center justify-center gap-2"
           >
             {loading ? (
@@ -191,6 +212,12 @@ export default function InvestigatePage() {
               </>
             )}
           </button>
+          {!isConnected && (
+            <p className="text-center text-xs text-[#a8a29e] mt-3">Connect your wallet above to pay the agent gas fee and start the investigation</p>
+          )}
+          {isConnected && !paid && (
+            <p className="text-center text-xs text-[#a8a29e] mt-3">Complete the payment above to unlock the investigation</p>
+          )}
         </motion.div>
       </section>
     </main>

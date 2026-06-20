@@ -1,0 +1,12 @@
+{
+  "name": "sniffer-blitz",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n web,coord -c cyan,yellow \"pnpm --prefix web dev\" \"cd services && .venv/bin/uvicorn coordinator:app --reload --port 8000\"",
+    "dev:web": "pnpm --prefix web dev",
+    "dev:coord": "cd services && .venv/bin/uvicorn coordinator:app --reload --port 8000"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.3"
+  }
+}

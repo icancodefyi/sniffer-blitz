@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { WalletButton } from "@/components/WalletConnect";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -27,12 +28,7 @@ export function Navbar() {
         style={{ maxWidth: "1200px", margin: "0 auto" }}
       >
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="m21 21-4.3-4.3"/>
-            </svg>
-          </div>
+          <Image src="/logo.png" alt="Sniffer" width={28} height={28} />
           <span
             className="text-[21px] font-semibold tracking-tight"
             style={{ color: "#0a0a0a" }}
@@ -71,6 +67,7 @@ export function Navbar() {
 
         {/* Desktop CTAs */}
         <div className="hidden md:flex items-center gap-2.5">
+          <WalletButton />
           <Link
             href="/investigate"
             className="px-5 py-2 rounded-full text-[13px] font-medium text-white transition-opacity hover:opacity-80"
@@ -157,6 +154,9 @@ export function Navbar() {
             Features
           </Link>
           <div className="mt-5 flex flex-col gap-3">
+            <div className="flex justify-center">
+              <WalletButton />
+            </div>
             <Link
               href="/investigate"
               onClick={() => setMenuOpen(false)}
