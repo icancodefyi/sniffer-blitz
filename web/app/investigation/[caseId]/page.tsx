@@ -26,7 +26,7 @@ export default function InvestigationPage({ params }: { params: Promise<{ caseId
 
   useEffect(() => {
     if (!caseId) return;
-    const fetch = async () => {
+    const fetchData = async () => {
       try {
         const [caseRes, statusRes, activityRes] = await Promise.all([
           fetch(`${COORDINATOR_URL}/case/${caseId}`),
@@ -36,10 +36,12 @@ export default function InvestigationPage({ params }: { params: Promise<{ caseId
         if (caseRes.ok) setCaseData(await caseRes.json());
         if (statusRes.ok) setAgentStatus(await statusRes.json());
         if (activityRes.ok) setActivity(await activityRes.json());
-      } catch (e) {}
+      } catch (e) {
+        console.error("Fetch error:", e);
+      }
     };
-    fetch();
-    const interval = setInterval(fetch, 1500);
+    fetchData();
+    const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
   }, [caseId]);
 
@@ -102,8 +104,8 @@ export default function InvestigationPage({ params }: { params: Promise<{ caseId
                     <motion.div
                       key={agent.name}
                       className={`rounded-xl border p-4 transition-colors ${state === "active" ? "border-warning bg-warning/5" : state === "complete" ? "border-success bg-success/5" : "border-border bg-background"}`}
-                      animate={state === "active" ? { scale: [1, 1.02, 1] } : {}}
-                      transition={{ duration: 1, repeat: Infinity }}
+                      animate={state === "active" ? { scale: [1, 1.01, 1] } : {}}
+                      transition={{ duration: 0.8, repeat: Infinity }}
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <div className={`w-3 h-3 rounded-full ${state === "active" ? "bg-warning animate-pulse-glow" : state === "complete" ? "bg-success" : "bg-border"}`} style={state === "complete" ? { backgroundColor: agent.color } : {}} />
@@ -119,7 +121,7 @@ export default function InvestigationPage({ params }: { params: Promise<{ caseId
 
               {/* Flow Arrow */}
               <div className="flex justify-center my-3">
-                <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.5, repeat: Infinity }}>
+                <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2, repeat: Infinity }}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-muted">
                     <path d="M12 5v14M5 12l7 7 7-7"/>
                   </svg>
@@ -255,11 +257,12 @@ export default function InvestigationPage({ params }: { params: Promise<{ caseId
               </div>
               <div className="space-y-2 max-h-[600px] overflow-y-auto">
                 <AnimatePresence>
-                  {activity.slice().reverse().slice(0, 30).map((entry, i) => (
+                  {activity.slice().reverse().slice(0, 20).map((entry, i) => (
                     <motion.div
                       key={`${entry.timestamp}-${i}`}
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2 }}
                       className="p-3 rounded-lg bg-background border border-border"
                     >
                       <div className="flex items-center gap-2 mb-1">
