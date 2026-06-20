@@ -1,24 +1,29 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { useAccount } from "wagmi";
 import { WalletButton, PayButton } from "@/components/WalletConnect";
 
 const COORDINATOR_URL = process.env.NEXT_PUBLIC_COORDINATOR_URL || "http://localhost:8000";
 
 export default function InvestigatePage() {
   const router = useRouter();
-  const { isConnected } = useAccount();
+  const [connected, setConnected] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [sources, setSources] = useState({ telegram: true, instagram: true, leak_domains: true });
   const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [paid, setPaid] = useState(false);
+
+  useEffect(() => {
+    setConnected(!!sessionStorage.getItem("sniffer_wallet"));
+    const check = setInterval(() => setConnected(!!sessionStorage.getItem("sniffer_wallet")), 1000);
+    return () => clearInterval(check);
+  }, []);
 
   const handleFile = useCallback((f: File) => {
     setFile(f);
@@ -212,10 +217,10 @@ export default function InvestigatePage() {
               </>
             )}
           </button>
-          {!isConnected && (
+          {!connected && (
             <p className="text-center text-xs text-[#a8a29e] mt-3">Connect your wallet above to pay the agent gas fee and start the investigation</p>
           )}
-          {isConnected && !paid && (
+          {connected && !paid && (
             <p className="text-center text-xs text-[#a8a29e] mt-3">Complete the payment above to unlock the investigation</p>
           )}
         </motion.div>
