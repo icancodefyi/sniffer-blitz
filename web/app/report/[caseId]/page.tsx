@@ -9,6 +9,7 @@ const COORDINATOR_URL = process.env.NEXT_PUBLIC_COORDINATOR_URL || "http://local
 export default function ReportPage({ params }: { params: Promise<{ caseId: string }> }) {
   const [caseId, setCaseId] = useState<string>("");
   const [caseData, setCaseData] = useState<any>(null);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
 
   useEffect(() => {
     params.then(p => setCaseId(p.caseId));
@@ -16,18 +17,41 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
 
   useEffect(() => {
     if (!caseId) return;
-    const fetch = async () => {
+    const fetchData = async () => {
       try {
         const res = await fetch(`${COORDINATOR_URL}/case/${caseId}`);
-        if (res.ok) setCaseData(await res.json());
-      } catch (e) {}
+        if (res.ok) {
+          const data = await res.json();
+          setCaseData(data);
+        } else {
+          console.error("Failed to fetch case:", res.status);
+        }
+      } catch (e) {
+        console.error("Fetch error:", e);
+      }
     };
-    fetch();
-    const interval = setInterval(fetch, 3000);
-    return () => clearInterval(interval);
+    fetchData();
+    const interval = setInterval(fetchData, 3000);
+    const timeout = setTimeout(() => setLoadingTimeout(true), 5000);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
   }, [caseId]);
 
   if (!caseData) {
+    if (loadingTimeout) {
+      return (
+        <main className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-muted mb-2">Unable to load report</p>
+            <Link href={`/investigation/${caseId}`} className="text-accent text-sm hover:underline">
+              ← Back to Investigation
+            </Link>
+          </div>
+        </main>
+      );
+    }
     return (
       <main className="min-h-screen flex items-center justify-center">
         <p className="text-muted">Loading...</p>
@@ -159,14 +183,12 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
             <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted mb-4">Prepared Complaints ({complaints.length})</p>
             <div className="space-y-4">
               {complaints.map((c: any, i: number) => {
-                let complaint: any = {};
-                try { complaint = JSON.parse(c.complaintData || c.complaint_data || "{}"); } catch {}
                 return (
                   <div key={i} className="p-4 rounded-lg border border-border bg-background">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <p className="font-medium text-sm">{complaint.platform || c.platform}</p>
-                        <p className="font-mono text-[10px] text-muted">{complaint.format || c.formatType}</p>
+                        <p className="font-medium text-sm">{c.platform}</p>
+                        <p className="font-mono text-[10px] text-muted">{c.format || c.formatType}</p>
                       </div>
                       <span className="font-mono text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border bg-success/20 text-success border-success/30">
                         Ready to Send
@@ -175,21 +197,21 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
                     <div className="space-y-2 text-xs">
                       <div>
                         <p className="font-mono text-[10px] text-muted mb-1">To:</p>
-                        <p className="font-mono">{complaint.contact}</p>
+                        <p className="font-mono">{c.contact}</p>
                       </div>
                       <div>
                         <p className="font-mono text-[10px] text-muted mb-1">Subject:</p>
-                        <p className="font-medium">{complaint.subject}</p>
+                        <p className="font-medium">{c.subject}</p>
                       </div>
                       <div>
                         <p className="font-mono text-[10px] text-muted mb-1">Body:</p>
-                        <pre className="font-sans text-xs whitespace-pre-wrap bg-background/50 rounded p-3 border border-border">{complaint.body}</pre>
+                        <pre className="font-sans text-xs whitespace-pre-wrap bg-background/50 rounded p-3 border border-border">{c.body}</pre>
                       </div>
                     </div>
                     <div className="flex gap-2 mt-3">
                       <button
                         onClick={() => {
-                          const mailto = `mailto:${complaint.contact}?subject=${encodeURIComponent(complaint.subject)}&body=${encodeURIComponent(complaint.body)}`;
+                          const mailto = `mailto:${c.contact}?subject=${encodeURIComponent(c.subject)}&body=${encodeURIComponent(c.body)}`;
                           window.open(mailto);
                         }}
                         className="px-3 py-1.5 bg-accent text-white rounded-lg text-xs font-medium hover:bg-accent-hover transition-colors"
@@ -198,7 +220,7 @@ export default function ReportPage({ params }: { params: Promise<{ caseId: strin
                       </button>
                       <button
                         onClick={() => {
-                          navigator.clipboard.writeText(`${complaint.subject}\n\n${complaint.body}`);
+                          navigator.clipboard.writeText(`${c.subject}\n\n${c.body}`);
                         }}
                         className="px-3 py-1.5 border border-border rounded-lg text-xs font-medium hover:bg-background transition-colors"
                       >
