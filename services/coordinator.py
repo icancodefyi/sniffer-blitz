@@ -8,9 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-from agents import TelegramScanner, InstagramScanner, LeakDomainScanner, FormatDetector, TakedownPreparer
-from base_agent import BaseAgent
-from config import w3
+from agents.agents import TelegramScanner, InstagramScanner, LeakDomainScanner, FormatDetector, TakedownPreparer
+from agents.base_agent import BaseAgent
+from agents.config import w3
 
 load_dotenv()
 
@@ -108,20 +108,20 @@ async def start_investigation(req: InvestigateRequest):
     coordinator = get_agent("Format Detector", coordinator_key)
 
     try:
+        # Get current case count before creation
+        case_count_before = coordinator.trail_contract.functions.caseCount().call()
+        
         receipt = coordinator._build_and_send_tx(
             coordinator.trail_contract.functions.createCase(req.image_hash)
-    )
-        case_id = None
-        for log in receipt.logs:
-            try:
-                decoded = coordinator.trail_contract.events.CaseCreated().process_log(log)
-                case_id = decoded.args.caseId
-                break
-            except Exception:
-                continue
-
-        if case_id is None:
-            raise Exception("Could not extract case ID from transaction")
+        )
+        
+        # Get case count after creation - the new case ID is the new count
+        case_count_after = coordinator.trail_contract.functions.caseCount().call()
+        
+        if case_count_after > case_count_before:
+            case_id = case_count_after
+        else:
+            raise Exception("Case was not created on-chain")
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create case on-chain: {str(e)}")
