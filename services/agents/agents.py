@@ -8,7 +8,7 @@ class TelegramScanner(BaseAgent):
 
     def scan(self, case_id: int, image_hash: str):
         print(f"[{self.name}] Starting Telegram scan for case {case_id}")
-        time.sleep(1)
+        time.sleep(0.3)
 
         findings = [
             {
@@ -43,7 +43,7 @@ class TelegramScanner(BaseAgent):
                 finding["confidence"],
                 finding["metadata"]
             )
-            time.sleep(0.5)
+            time.sleep(0.2)
 
         print(f"[{self.name}] Scan complete. Found {len(findings)} matches.")
         return findings
@@ -55,7 +55,7 @@ class InstagramScanner(BaseAgent):
 
     def scan(self, case_id: int, image_hash: str):
         print(f"[{self.name}] Starting Instagram scan for case {case_id}")
-        time.sleep(1)
+        time.sleep(0.3)
 
         findings = []
 
@@ -69,7 +69,7 @@ class LeakDomainScanner(BaseAgent):
 
     def scan(self, case_id: int, image_hash: str):
         print(f"[{self.name}] Starting leak domain scan for case {case_id}")
-        time.sleep(1)
+        time.sleep(0.3)
 
         findings = [
             {
@@ -118,7 +118,7 @@ class LeakDomainScanner(BaseAgent):
                 finding["confidence"],
                 finding["metadata"]
             )
-            time.sleep(0.5)
+            time.sleep(0.2)
 
         print(f"[{self.name}] Scan complete. Found {len(findings)} matches.")
         return findings
@@ -130,7 +130,7 @@ class FormatDetector(BaseAgent):
 
     def detect_formats(self, case_id: int, findings: list):
         print(f"[{self.name}] Detecting takedown formats for case {case_id}")
-        time.sleep(1)
+        time.sleep(0.3)
 
         platforms = set(f["domain"] for f in findings)
         format_specs = []
@@ -185,7 +185,7 @@ class FormatDetector(BaseAgent):
                     spec["bodyTemplate"]
                 )
                 format_specs.append(spec)
-                time.sleep(0.5)
+                time.sleep(0.2)
 
         print(f"[{self.name}] Format detection complete. Found {len(format_specs)} formats.")
         return format_specs
@@ -197,7 +197,7 @@ class TakedownPreparer(BaseAgent):
 
     def prepare_complaints(self, case_id: int, findings: list, format_specs: list):
         print(f"[{self.name}] Preparing complaints for case {case_id}")
-        time.sleep(1)
+        time.sleep(0.3)
 
         complaints = []
         spec_map = {s["platform"]: s for s in format_specs}
@@ -224,7 +224,7 @@ class TakedownPreparer(BaseAgent):
                     complaint_data
                 )
                 complaints.append(json.loads(complaint_data))
-                time.sleep(0.5)
+                time.sleep(0.2)
 
         print(f"[{self.name}] Complaint preparation complete. Prepared {len(complaints)} complaints.")
         return complaints

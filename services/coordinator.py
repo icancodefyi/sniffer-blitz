@@ -3,10 +3,11 @@ import json
 import hashlib
 from datetime import datetime
 from typing import List, Dict, Any
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
+import threading
 
 from agents.agents import TelegramScanner, InstagramScanner, LeakDomainScanner, FormatDetector, TakedownPreparer
 from agents.base_agent import BaseAgent
@@ -99,8 +100,100 @@ async def get_activity():
     return activity_log
 
 
+def run_investigation(case_id: int, image_hash: str, sources: List[str]):
+    """Run the full investigation in background"""
+    try:
+        all_findings = []
+        agents_involved = []
+
+        if "telegram" in sources:
+            agent_status["Telegram Scanner"] = "scanning"
+            log_activity("Telegram Scanner", "Started Scanning", "Scanning Telegram channels")
+            agent = get_agent("Telegram Scanner", AGENT_KEYS["telegram"])
+            findings = agent.scan(case_id, image_hash)
+            all_findings.extend(findings)
+            agents_involved.append(agent.address)
+            agent_status["Telegram Scanner"] = "complete"
+            log_activity("Telegram Scanner", "Scan Complete", f"Found {len(findings)} matches")
+
+        if "instagram" in sources:
+            agent_status["Instagram Scanner"] = "scanning"
+            log_activity("Instagram Scanner", "Started Scanning", "Scanning Instagram")
+            agent = get_agent("Instagram Scanner", AGENT_KEYS["instagram"])
+            findings = agent.scan(case_id, image_hash)
+            all_findings.extend(findings)
+            agents_involved.append(agent.address)
+            agent_status["Instagram Scanner"] = "complete"
+            log_activity("Instagram Scanner", "Scan Complete", f"Found {len(findings)} matches")
+
+        if "leak_domains" in sources:
+            agent_status["Leak Domain Scanner"] = "scanning"
+            log_activity("Leak Domain Scanner", "Started Scanning", "Scanning known leak domains")
+            agent = get_agent("Leak Domain Scanner", AGENT_KEYS["leak_domains"])
+            findings = agent.scan(case_id, image_hash)
+            all_findings.extend(findings)
+            agents_involved.append(agent.address)
+            agent_status["Leak Domain Scanner"] = "complete"
+            log_activity("Leak Domain Scanner", "Scan Complete", f"Found {len(findings)} matches")
+
+        cases[case_id]["findings"] = all_findings
+
+        if all_findings:
+            agent_status["Format Detector"] = "detecting"
+            log_activity("Format Detector", "Started Detection", "Detecting takedown formats")
+            agent = get_agent("Format Detector", AGENT_KEYS["format_detector"])
+            format_specs = agent.detect_formats(case_id, all_findings)
+            cases[case_id]["format_specs"] = format_specs
+            agent_status["Format Detector"] = "complete"
+            log_activity("Format Detector", "Detection Complete", f"Found {len(format_specs)} formats")
+
+            agent_status["Takedown Preparer"] = "preparing"
+            log_activity("Takedown Preparer", "Started Preparation", "Preparing complaints")
+            agent = get_agent("Takedown Preparer", AGENT_KEYS["takedown_preparer"])
+            complaints = agent.prepare_complaints(case_id, all_findings, format_specs)
+            cases[case_id]["complaints"] = complaints
+            agent_status["Takedown Preparer"] = "complete"
+            log_activity("Takedown Preparer", "Preparation Complete", f"Prepared {len(complaints)} complaints")
+
+        report_data = json.dumps({
+            "case_id": case_id,
+            "image_hash": image_hash,
+            "findings": all_findings,
+            "format_specs": cases[case_id]["format_specs"],
+            "complaints": cases[case_id]["complaints"],
+            "timestamp": datetime.utcnow().isoformat(),
+        }, sort_keys=True)
+        report_hash = hashlib.sha256(report_data.encode()).digest()
+        cases[case_id]["report_hash"] = "0x" + report_hash.hex()
+        cases[case_id]["status"] = "complete"
+        cases[case_id]["agents_involved"] = agents_involved
+
+        log_activity("Coordinator", "Report Generated", f"Report hash: {cases[case_id]['report_hash']}")
+
+        try:
+            coordinator_key = os.getenv("COORDINATOR_PRIVATE_KEY", "")
+            if not coordinator_key:
+                coordinator_key = AGENT_KEYS["format_detector"]
+            coordinator = get_agent("Format Detector", coordinator_key)
+            summary = f"Case #{case_id}: {len(all_findings)} findings, {len(cases[case_id]['format_specs'])} formats, {len(cases[case_id]['complaints'])} complaints"
+            coordinator.store_report(
+                case_id,
+                report_hash,
+                agents_involved,
+                "",
+                summary
+            )
+            log_activity("Coordinator", "Report Stored On-Chain", f"TX confirmed for case #{case_id}")
+        except Exception as e:
+            log_activity("Coordinator", "Report Storage Failed", str(e))
+
+    except Exception as e:
+        log_activity("Coordinator", "Investigation Failed", str(e))
+        cases[case_id]["status"] = "failed"
+
+
 @app.post("/investigate")
-async def start_investigation(req: InvestigateRequest):
+async def start_investigation(req: InvestigateRequest, background_tasks: BackgroundTasks):
     coordinator_key = os.getenv("COORDINATOR_PRIVATE_KEY", "")
     if not coordinator_key:
         coordinator_key = AGENT_KEYS["format_detector"]
@@ -138,93 +231,13 @@ async def start_investigation(req: InvestigateRequest):
 
     log_activity("Coordinator", "Case Created", f"Case #{case_id} created on-chain")
 
-    all_findings = []
-    agents_involved = []
-
-    if "telegram" in req.sources:
-        agent_status["Telegram Scanner"] = "scanning"
-        log_activity("Telegram Scanner", "Started Scanning", "Scanning Telegram channels")
-        agent = get_agent("Telegram Scanner", AGENT_KEYS["telegram"])
-        findings = agent.scan(case_id, req.image_hash)
-        all_findings.extend(findings)
-        agents_involved.append(agent.address)
-        agent_status["Telegram Scanner"] = "complete"
-        log_activity("Telegram Scanner", "Scan Complete", f"Found {len(findings)} matches")
-
-    if "instagram" in req.sources:
-        agent_status["Instagram Scanner"] = "scanning"
-        log_activity("Instagram Scanner", "Started Scanning", "Scanning Instagram")
-        agent = get_agent("Instagram Scanner", AGENT_KEYS["instagram"])
-        findings = agent.scan(case_id, req.image_hash)
-        all_findings.extend(findings)
-        agents_involved.append(agent.address)
-        agent_status["Instagram Scanner"] = "complete"
-        log_activity("Instagram Scanner", "Scan Complete", f"Found {len(findings)} matches")
-
-    if "leak_domains" in req.sources:
-        agent_status["Leak Domain Scanner"] = "scanning"
-        log_activity("Leak Domain Scanner", "Started Scanning", "Scanning known leak domains")
-        agent = get_agent("Leak Domain Scanner", AGENT_KEYS["leak_domains"])
-        findings = agent.scan(case_id, req.image_hash)
-        all_findings.extend(findings)
-        agents_involved.append(agent.address)
-        agent_status["Leak Domain Scanner"] = "complete"
-        log_activity("Leak Domain Scanner", "Scan Complete", f"Found {len(findings)} matches")
-
-    cases[case_id]["findings"] = all_findings
-
-    if all_findings:
-        agent_status["Format Detector"] = "detecting"
-        log_activity("Format Detector", "Started Detection", "Detecting takedown formats")
-        agent = get_agent("Format Detector", AGENT_KEYS["format_detector"])
-        format_specs = agent.detect_formats(case_id, all_findings)
-        cases[case_id]["format_specs"] = format_specs
-        agent_status["Format Detector"] = "complete"
-        log_activity("Format Detector", "Detection Complete", f"Found {len(format_specs)} formats")
-
-        agent_status["Takedown Preparer"] = "preparing"
-        log_activity("Takedown Preparer", "Started Preparation", "Preparing complaints")
-        agent = get_agent("Takedown Preparer", AGENT_KEYS["takedown_preparer"])
-        complaints = agent.prepare_complaints(case_id, all_findings, format_specs)
-        cases[case_id]["complaints"] = complaints
-        agent_status["Takedown Preparer"] = "complete"
-        log_activity("Takedown Preparer", "Preparation Complete", f"Prepared {len(complaints)} complaints")
-
-    report_data = json.dumps({
-        "case_id": case_id,
-        "image_hash": req.image_hash,
-        "findings": all_findings,
-        "format_specs": cases[case_id]["format_specs"],
-        "complaints": cases[case_id]["complaints"],
-        "timestamp": datetime.utcnow().isoformat(),
-    }, sort_keys=True)
-    report_hash = hashlib.sha256(report_data.encode()).digest()
-    cases[case_id]["report_hash"] = "0x" + report_hash.hex()
-    cases[case_id]["status"] = "complete"
-    cases[case_id]["agents_involved"] = agents_involved
-
-    log_activity("Coordinator", "Report Generated", f"Report hash: {cases[case_id]['report_hash']}")
-
-    try:
-        summary = f"Case #{case_id}: {len(all_findings)} findings, {len(cases[case_id]['format_specs'])} formats, {len(cases[case_id]['complaints'])} complaints"
-        coordinator.store_report(
-            case_id,
-            report_hash,
-            agents_involved,
-            "",
-            summary
-        )
-        log_activity("Coordinator", "Report Stored On-Chain", f"TX confirmed for case #{case_id}")
-    except Exception as e:
-        log_activity("Coordinator", "Report Storage Failed", str(e))
+    # Run investigation in background
+    background_tasks.add_task(run_investigation, case_id, req.image_hash, req.sources)
 
     return {
         "case_id": case_id,
-        "status": "complete",
-        "findings_count": len(all_findings),
-        "format_specs_count": len(cases[case_id]["format_specs"]),
-        "complaints_count": len(cases[case_id]["complaints"]),
-        "report_hash": cases[case_id]["report_hash"],
+        "status": "investigating",
+        "message": "Investigation started. Agents are working."
     }
 
 
